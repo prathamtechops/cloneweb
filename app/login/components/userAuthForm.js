@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -10,8 +12,19 @@ import { Button } from "@/components/ui/button";
 
 // Define Zod schema for the form data
 const schema = z.object({
-  mobileNumber: z.string().min(10).max(10),
-  otp: z.string().min(4).max(4),
+  mobileNumber: z
+    .string()
+    .min(10, "Mobile number must be exactly 10 digits.")
+    .max(10, "Mobile number must be exactly 10 digits.")
+    .refine(
+      (value) => /^\d+$/.test(value),
+      "Mobile number must only contain digits."
+    ),
+  otp: z
+    .string()
+    .min(4, "OTP must be exactly 4 digits.")
+    .max(4, "OTP must be exactly 4 digits.")
+    .refine((value) => /^\d+$/.test(value), "OTP must only contain digits."),
 });
 
 export function UserAuthForm({ className, ...props }) {
@@ -20,26 +33,27 @@ export function UserAuthForm({ className, ...props }) {
     handleSubmit,
     setValue,
     trigger,
+    getValue,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
   });
 
+  const otp = watch("otp", ""); // Get the current value of the otp field
+
   const [isLoading, setIsLoading] = React.useState(false);
-  const [currentStep, setCurrentStep] = React.useState("mobile"); // "mobile" or "otp"
+  const [currentStep, setCurrentStep] = React.useState("mobile");
 
-  const onSubmit = async (data) => {
-    if (currentStep === "mobile") {
-      const isValid = await trigger("mobileNumber");
-      console.log("Is mobile number valid?", isValid);
-
-      if (isValid) {
-        setCurrentStep("otp");
-      }
-    } else {
-      // Handle OTP submission
-      console.log("Form data submitted:", data);
+  const validateMobile = async () => {
+    const isValidate = await trigger("mobileNumber");
+    if (isValidate) {
+      setCurrentStep("otp");
     }
+  };
+
+  const onSubmit = (data) => {
+    console.log("data", data);
   };
 
   return (
@@ -47,63 +61,70 @@ export function UserAuthForm({ className, ...props }) {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid gap-2">
           {currentStep === "mobile" && (
-            <div className="grid gap-1">
-              <Label className="sr-only" htmlFor="mobileNumber">
-                Mobile Number
-              </Label>
-              <div className="flex items-center justify-center gap-2">
-                <Input
-                  type="tel"
-                  placeholder="Enter your mobile number"
-                  {...register("mobileNumber")}
-                  required
-                />
+            <>
+              <div className="grid gap-1">
+                <Label className="sr-only" htmlFor="mobileNumber">
+                  Mobile Number
+                </Label>
+                <div className="flex items-center justify-center gap-2">
+                  <Input
+                    type="tel"
+                    placeholder="Enter your mobile number"
+                    {...register("mobileNumber")}
+                    required
+                  />
+                </div>
+                {errors && errors.mobileNumber && (
+                  <span className="text-red-500 text-center">
+                    {errors.mobileNumber.message}
+                  </span>
+                )}
               </div>
-              {errors && errors.mobileNumber && (
-                <span className="text-red-500">
-                  {errors.mobileNumber.message}
-                </span>
-              )}
-            </div>
+              <Button onClick={validateMobile}>Submit Mobile Number</Button>
+            </>
           )}
 
           {currentStep === "otp" && (
-            <div className="grid gap-1">
-              <Label className="sr-only" htmlFor="otp">
-                OTP
-              </Label>
-              <div className="flex items-center justify-center gap-2">
-                <OtpInput
-                  value={""}
-                  onChange={(otp) => setValue("otp", otp)}
-                  numInputs={4}
-                  renderSeparator={<span>-</span>}
-                  renderInput={(inputProps, index) => (
-                    <input
-                      {...inputProps}
-                      style={{
-                        padding: "8px",
-                        borderRadius: "5px",
-                        maxWidth: "40px",
-                        minHeight: "40px",
-                        border: "1px solid #D1D5DB",
-                      }}
-                      name={`otp_${index}`}
-                    />
-                  )}
-                />
+            <>
+              <div className="grid gap-1">
+                <Label className="sr-only" htmlFor="otp">
+                  OTP
+                </Label>
+                <div className="flex items-center justify-center gap-2">
+                  <OtpInput
+                    value={otp}
+                    onChange={(otp) => setValue("otp", otp)}
+                    numInputs={4}
+                    renderSeparator={<span>-</span>}
+                    renderInput={(inputProps, index) => (
+                      <input
+                        {...inputProps}
+                        style={{
+                          padding: "8px",
+                          borderRadius: "5px",
+                          maxWidth: "40px",
+                          minHeight: "40px",
+                          border: "1px solid #D1D5DB",
+                          color: "black",
+                          // backgroundColor: "lightgray", // Add this line to change the background color to light gray
+                        }}
+                        name={`otp_${index}`}
+                      />
+                    )}
+                  />
+                </div>
+                {errors && errors.otp && (
+                  <span className="text-red-500 text-center">
+                    {errors.otp.message}
+                  </span>
+                )}
               </div>
-              {errors && errors.otp && (
-                <span className="text-red-500">{errors.otp.message}</span>
-              )}
-            </div>
+              <Button type="submit">Sign In with OTP</Button>
+              <Button onClick={() => setCurrentStep("mobile")}>
+                Back
+              </Button>
+            </>
           )}
-
-          <Button type="submit" disabled={isLoading}>
-            {currentStep === "mobile"
-              ? "Submit Mobile Number"
-              : "Sign In with OTP"}
-          </Button>
         </div>
       </form>
 

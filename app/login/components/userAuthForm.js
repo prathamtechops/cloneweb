@@ -63,7 +63,7 @@ export function UserAuthForm({ className, ...props }) {
                   </span>
                 )}
               </div>
-              <Button disabled={isLoading} onClick={validateMobile}>
+              <Button  onClick={validateMobile}>
                 Submit Mobile Number
               </Button>
             </>

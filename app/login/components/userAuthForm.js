@@ -3,29 +3,12 @@
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
 import { cn } from "@/lib/utils";
 import OtpInput from "react-otp-input";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-// Define Zod schema for the form data
-const schema = z.object({
-  mobileNumber: z
-    .string()
-    .min(10, "Mobile number must be exactly 10 digits.")
-    .max(10, "Mobile number must be exactly 10 digits.")
-    .refine(
-      (value) => /^\d+$/.test(value),
-      "Mobile number must only contain digits."
-    ),
-  otp: z
-    .string()
-    .min(4, "OTP must be exactly 4 digits.")
-    .max(4, "OTP must be exactly 4 digits.")
-    .refine((value) => /^\d+$/.test(value), "OTP must only contain digits."),
-});
+import { schema } from "./schema";
 
 export function UserAuthForm({ className, ...props }) {
   const {
@@ -40,9 +23,9 @@ export function UserAuthForm({ className, ...props }) {
     resolver: zodResolver(schema),
   });
 
-  const otp = watch("otp", ""); // Get the current value of the otp field
+  const otp = watch("otp", "");
 
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [currentStep, setCurrentStep] = React.useState("mobile");
 
   const validateMobile = async () => {
@@ -80,7 +63,9 @@ export function UserAuthForm({ className, ...props }) {
                   </span>
                 )}
               </div>
-              <Button onClick={validateMobile}>Submit Mobile Number</Button>
+              <Button disabled={isLoading} onClick={validateMobile}>
+                Submit Mobile Number
+              </Button>
             </>
           )}
 
@@ -106,7 +91,6 @@ export function UserAuthForm({ className, ...props }) {
                           minHeight: "40px",
                           border: "1px solid #D1D5DB",
                           color: "black",
-                          // backgroundColor: "lightgray", // Add this line to change the background color to light gray
                         }}
                         name={`otp_${index}`}
                       />
@@ -119,10 +103,10 @@ export function UserAuthForm({ className, ...props }) {
                   </span>
                 )}
               </div>
-              <Button type="submit">Sign In with OTP</Button>
-              <Button onClick={() => setCurrentStep("mobile")}>
-                Back
+              <Button disabled={true} type="submit">
+                Sign In with OTP
               </Button>
+              <Button onClick={() => setCurrentStep("mobile")}>Back</Button>
             </>
           )}
         </div>
